@@ -4,62 +4,62 @@ import java.util.HashMap;
 
 public class Message {
 	
-	private HashMap<String, String> f = new HashMap<>();
+	private HashMap<String, String> fields = new HashMap<>();
 
 	public Message(HashMap<String, String> fields) {
-		this.f = fields;
+		this.fields = fields;
 	}
 
 	public Message(String rawMsg) {
-		this.f = decode(rawMsg);
+		this.fields = decode(rawMsg);
 	}
 
 	public String encode() {
-		StringBuilder b = new StringBuilder();
+		StringBuilder builder = new StringBuilder();
 
-		for (String k : f.keySet()) {
-			b.append(k + "[" + f.get(k) + "]");
+		for (String key : fields.keySet()) {
+			builder.append(key + "[" + fields.get(key) + "]");
 		}
 
-		return b.toString();
+		return builder.toString();
 	}
 
-	public HashMap<String, String> decode(String msg) {
-		for (int i = 0; i < msg.length() - 1;) {
+	public HashMap<String, String> decode(String message) {
+		for (int i = 0; i < message.length() - 1;) {
 
-			StringBuilder b = new StringBuilder();
+			StringBuilder keyBuilder = new StringBuilder();
 			while (true) {
-				if (msg.charAt(i) == '[') {
+				if (message.charAt(i) == '[') {
 					i++;
 					break;
 				}
 
-				b.append(msg.charAt(i));
+				keyBuilder.append(message.charAt(i));
 				i++;
 			}
 
-			StringBuilder v = new StringBuilder();
+			StringBuilder valueBuilder = new StringBuilder();
 			while (true) {
-				if (msg.charAt(i) == ']') {
+				if (message.charAt(i) == ']') {
 					i++;
 					break;
 				}
 
-				v.append(msg.charAt(i));
+				valueBuilder.append(message.charAt(i));
 				i++;
 			}
 
-			f.put(b.toString(), v.toString());
+			fields.put(keyBuilder.toString(), valueBuilder.toString());
 		}
 
-		return f;
+		return fields;
 	}
 
 	public void set(String key, String value) {
-		f.put(key, value);
+		fields.put(key, value);
 	}
 
 	public String get(String key) {
-		return f.get(key);
+		return fields.get(key);
 	}
 }
