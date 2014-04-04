@@ -14,9 +14,11 @@ public class Server extends Thread {
 	
 	private ArrayList<ServerConnection> connections = new ArrayList<>();
 	private ArrayList<Message> history = new ArrayList<>();
+	private ArrayList<String> bannedClients = new ArrayList<>();
 	private ServerSocket socketServer;
 	private int port;
 	private boolean hasToRun;
+	private ServerGUI gui;
 
 	public static void main(String[] args) {
 		(new Server(4001)).start();
@@ -46,24 +48,41 @@ public class Server extends Thread {
             }
         });
 		
-		new ServerGUI(this);
+		this.gui = new ServerGUI(this);
 		
 		this.hasToRun = true;
 		while (this.hasToRun) {
 			try {
-				Socket s = socketServer.accept();
+				Socket socket = socketServer.accept();
+				
+				boolean isBanned = false;
+				for(String bannedIP : this.bannedClients){
+					if(socket.getInetAddress().toString().equals(bannedIP)){
+						isBanned=true;
+						socket.close();
+						break;
+					}
+				}
+				if(isBanned){
+					isBanned=false;
+					continue;
+				}
 
-				ServerConnection c = new ServerConnection(s, this);
+				ServerConnection c = new ServerConnection(socket, this);
 				
 				c.send("User[SERVER]Message[Welcome!]Datetime["+(new Date())+"]\n");
-				c.send("User[SERVER]Message[------BEGIN-CHAT-HISTORY------]Datetime["+(new Date())+"]\n");
-				for (Message message : this.history) {
-					c.send(message.encode()+"\n");
+				
+				if(this.history.size()>0){	
+					c.send("User[SERVER]Message[------BEGIN-CHAT-HISTORY------]Datetime["+(new Date())+"]\n");
+					for (Message message : this.history) {
+						c.send(message.encode()+"\n");
+					}
+					c.send("User[SERVER]Message[-------END-CHAT-HISTORY-------]Datetime["+(new Date())+"]\n");
 				}
 				c.start();
-				c.send("User[SERVER]Message[-------END-CHAT-HISTORY-------]Datetime["+(new Date())+"]\n");
 
 				connections.add(c);
+				gui.updateClientList();
 			} catch (IOException e) {
 				System.err.println("WARNING. An I/O error occurred while waiting for a connection. Trying with another socket.\n" + e.getMessage()+"\n");
 			}
@@ -98,11 +117,35 @@ public class Server extends Thread {
 		return;
 	}
 	
-	public void dropConnection(Connection c){
-		this.connections.remove(c);
+	public void kickClient(String ipAddress, int port, boolean isBanned){
+		for(ServerConnection connection : this.connections){
+			if(connection.getSourceIP().equals(ipAddress) && port == connection.getSourcePort()){
+				try {
+					connection.send("User[SERVER]Message[You have been kicked out"+(isBanned?" and banned":"")+"]Datetime["+(new Date())+"]\n");
+				} catch (IOException e) {
+					this.dropConnection(connection);
+					connection.kill();
+					connection.close();
+				}
+				this.dropConnection(connection);
+				connection.kill();
+				connection.close();
+				break;
+			}
+		}
 	}
 
-	public ArrayList<ServerConnection> getConns() {
+	public void banClient(String ipAddress, int port){
+		this.bannedClients.add(ipAddress);
+		this.kickClient(ipAddress, port, true);
+	}
+	
+	public void dropConnection(Connection connection){
+		this.connections.remove(connection);
+		this.gui.updateClientList();
+	}
+
+	public ArrayList<ServerConnection> getConnections() {
 		return connections;
 	}
 
@@ -110,8 +153,8 @@ public class Server extends Thread {
 		return history;
 	}
 
-	public void addMsg(Message msg) {
-		history.add(msg);
+	public void addMsg(Message message) {
+		history.add(message);
 	}
 	
 	public int getPort(){

@@ -42,7 +42,7 @@ public class ServerConnection extends Connection {
 			message.set("SourcePort", ""+this.getSourcePort());
 			server.addMsg(message);
 
-			for (ServerConnection c : server.getConns()) {
+			for (ServerConnection c : server.getConnections()) {
 				if (c != this) {
 					try {
 						c.send(message.encode()+'\n');

@@ -37,6 +37,7 @@ public class Client extends JFrame {
 
 	public Client(String server, String user, int port) {
 		super();
+		
 		this.server = server;
 		this.user = user;
 		this.port = port;
@@ -49,9 +50,6 @@ public class Client extends JFrame {
 		this.setLocationRelativeTo(null);
 		this.setBackground(new Color(220,220,220));
 
-		JPanel main = new JPanel();
-		main.setBackground(new Color(220,220,220));
-		main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
 		this.history = new JTextArea(10,10);
 		this.history.setEditable(false);
 		this.history.setBackground(new Color(255,255,255));
@@ -69,8 +67,11 @@ public class Client extends JFrame {
 		this.msgInput.setForeground(new Color(120,0,0));
 		this.msgInput.setFont(new Font("Monospaced",Font.PLAIN,12));
 
-
 		JScrollPane scroll = new JScrollPane(this.history);
+
+		JPanel main = new JPanel();
+		main.setBackground(new Color(220,220,220));
+		main.setLayout(new BoxLayout(main, BoxLayout.Y_AXIS));
 		main.add(scroll);
 		main.add(this.msgInput);
 		
@@ -110,12 +111,6 @@ public class Client extends JFrame {
 		this.history.setEditable(false);		
 	}
 	
-	public void clearHistory(){
-		this.history.setEditable(true);
-		this.history.setText("");
-		this.history.setEditable(false);
-	}
-	
 	public void reconnect(){
 		this.hasToReconnect = true;
 		this.msgInput.removeActionListener(this.sendMessageAction);
@@ -138,8 +133,7 @@ public class Client extends JFrame {
 				try {
 					connection.send("User[" + user + "]Message[" + msgInput.getText() + "]");
 				} catch (IOException ex) {
-					clearHistory();
-					showError("WARNING. You are disconnected.\n"+ex.getMessage()+'\n');
+					showError("WARNING. You are disconnected.\n");
 					reconnect();
 				}
 				history.setEditable(true);

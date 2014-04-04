@@ -38,7 +38,7 @@ public class ClientConnection extends Connection {
 				Thread.yield();
 				this.client.addMessage(message);
 			} catch (IOException e) {
-				client.showError("WARNING. You are disconnected.\n"+e.getMessage()+'\n');
+				client.showError("WARNING. You are disconnected.\n");
 				client.reconnect();
 			}
 		}
